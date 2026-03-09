@@ -20,6 +20,4 @@ Arduino-based system to measure heart rate and SpO₂ using MAX30100 sensor
 ## Team Contribution
 
 This project was completed as a team project.
-
-Arduino code implementation: Team collaboration (code written by teammate).
-Circuit setup, testing, and documentation: Darsana Praveen.
+Arduino code was implemented by a teammate, while I contributed to circuit setup, testing, and project documentation.
