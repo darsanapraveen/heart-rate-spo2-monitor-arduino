@@ -1,0 +1,95 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include "MAX30105.h"
+#include "spo2_algorithm.h"
+
+// ---------- Objects ----------
+MAX30105 particleSensor;
+LiquidCrystal_I2C lcd(0x27, 16, 2); // 16x2 LCD, I2C address 0x27
+
+// ---------- Buffers ----------
+#define BUFFER_SIZE 100
+uint16_t irBuffer[BUFFER_SIZE];
+uint16_t redBuffer[BUFFER_SIZE];
+
+// ---------- Variables ----------
+int32_t spo2;
+int8_t spo2Valid;
+int32_t heartRate;
+int8_t hrValid;
+
+int heartbeatPos = 0;
+
+void setup() {
+  Wire.begin();
+
+  // Initialize LCD
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Starting...");
+  delay(1000);
+  lcd.clear();
+
+  // Initialize MAX30102
+  if (!particleSensor.begin(Wire, I2C_SPEED_STANDARD)) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Sensor error!");
+    while (1); // stop here if sensor not found
+  }
+
+  particleSensor.setup(); // default config
+  lcd.setCursor(0, 0);
+  lcd.print("Sensor Ready");
+  delay(1000);
+  lcd.clear();
+
+  // Preload buffer
+  for (int i = 0; i < BUFFER_SIZE; i++) {
+    irBuffer[i] = particleSensor.getIR();
+    redBuffer[i] = particleSensor.getRed();
+    delay(10);
+  }
+}
+
+void loop() {
+  // Shift buffer and add new readings
+  for (int i = 0; i < BUFFER_SIZE - 1; i++) {
+    irBuffer[i] = irBuffer[i + 1];
+    redBuffer[i] = redBuffer[i + 1];
+  }
+
+  irBuffer[BUFFER_SIZE - 1] = particleSensor.getIR();
+  redBuffer[BUFFER_SIZE - 1] = particleSensor.getRed();
+
+  // Process BPM and SpO2
+  maxim_heart_rate_and_oxygen_saturation(
+    irBuffer, BUFFER_SIZE,
+    redBuffer,
+    &spo2, &spo2Valid,
+    &heartRate, &hrValid
+  );
+
+  // --- Display on LCD ---
+  lcd.setCursor(0, 0); // First row
+  if (hrValid) {
+    lcd.print("BPM: ");
+    lcd.print(heartRate);
+    lcd.print("    "); // clear trailing chars
+  } else {
+    lcd.print("BPM: --     ");
+  }
+
+  lcd.setCursor(0, 1); // Second row
+  if (spo2Valid) {
+    lcd.print("SpO2: ");
+    lcd.print(spo2);
+    lcd.print("%   "); // clear trailing chars
+  } else {
+    lcd.print("SpO2: --%    ");
+  }
+
+  delay(1000); // update every 1 sec
+}
