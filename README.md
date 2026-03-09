@@ -16,3 +16,10 @@ This project measures heart rate (BPM) and oxygen saturation (SpO2) using the MA
 ## Technologies
 Arduino, Embedded C, I2C communication# heart-rate-spo2-monitor-arduino
 Arduino-based system to measure heart rate and SpO₂ using MAX30100 sensor
+
+## Team Contribution
+
+This project was completed as a team project.
+
+Arduino code implementation: Team collaboration (code written by teammate).
+Circuit setup, testing, and documentation: Darsana Praveen.
